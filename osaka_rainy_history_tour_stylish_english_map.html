@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Osaka Rainy History Tour Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --blue:#60a5fa;
+  --cyan:#22d3ee;
+  --violet:#a78bfa;
+  --green:#34d399;
+  --amber:#f59e0b;
+  --panel:rgba(255,255,255,.94);
+  --line:rgba(255,255,255,.18);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;
+  color:white;
+  background:
+    radial-gradient(circle at 8% 8%,rgba(96,165,250,.28),transparent 30%),
+    radial-gradient(circle at 88% 10%,rgba(34,211,238,.18),transparent 32%),
+    radial-gradient(circle at 74% 92%,rgba(167,139,250,.18),transparent 28%),
+    linear-gradient(135deg,#08111f,#111827 52%,#0f172a);
+}
+.hero{
+  padding:24px 18px 16px;
+  border-bottom:1px solid var(--line);
+}
+.eyebrow{
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.62);
+  font-size:11px;
+  margin-bottom:8px;
+}
+h1{
+  margin:0;
+  font-size:clamp(26px,6vw,46px);
+  line-height:1.05;
+  font-weight:880;
+}
+.lead{
+  margin:10px 0 16px;
+  max-width:860px;
+  color:rgba(255,255,255,.78);
+  line-height:1.55;
+  font-size:14px;
+}
+.toolbar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+button{
+  border:1px solid rgba(255,255,255,.28);
+  color:white;
+  background:rgba(255,255,255,.09);
+  padding:10px 13px;
+  border-radius:999px;
+  font-weight:800;
+  font-size:13px;
+  cursor:pointer;
+  backdrop-filter:blur(12px);
+}
+button.active{
+  background:white;
+  color:#111827;
+  border-color:white;
+}
+.layout{
+  display:grid;
+  grid-template-columns:minmax(0,1.45fr) minmax(330px,.75fr);
+  gap:14px;
+  padding:14px;
+}
+#map{
+  min-height:68vh;
+  height:calc(100vh - 205px);
+  border-radius:24px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  box-shadow:0 24px 70px rgba(0,0,0,.38);
+}
+.side{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  max-height:calc(100vh - 205px);
+  overflow:auto;
+  padding-right:2px;
+}
+.recommend{
+  background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.08));
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:16px;
+  backdrop-filter:blur(20px);
+}
+.recommend h2{
+  margin:0 0 6px;
+  font-size:17px;
+}
+.recommend .meta{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:9px 0 10px;
+}
+.pill{
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.16);
+  padding:7px 9px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+}
+.recommend p{
+  margin:0;
+  color:rgba(255,255,255,.76);
+  font-size:13px;
+  line-height:1.55;
+}
+.route{
+  margin-top:10px;
+  display:grid;
+  gap:8px;
+}
+.route div{
+  background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:14px;
+  padding:9px 10px;
+  font-size:13px;
+  line-height:1.45;
+}
+.cards{
+  display:grid;
+  gap:10px;
+}
+.card{
+  background:var(--panel);
+  color:#111827;
+  border-radius:20px;
+  padding:14px;
+  box-shadow:0 12px 32px rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.2);
+}
+.topline{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+}
+.card h3{
+  margin:0;
+  font-size:16px;
+}
+.tag{
+  flex:0 0 auto;
+  font-size:11px;
+  font-weight:850;
+  padding:5px 8px;
+  border-radius:999px;
+  color:white;
+  background:#0f172a;
+}
+.desc{
+  margin:8px 0 10px;
+  color:#374151;
+  line-height:1.5;
+  font-size:13px;
+}
+.mini{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:10px;
+}
+.mini div{
+  background:#f3f4f6;
+  padding:8px;
+  border-radius:12px;
+  font-size:12px;
+  color:#374151;
+}
+.mini b{
+  display:block;
+  color:#111827;
+  margin-bottom:2px;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.tip{
+  font-size:12.5px;
+  line-height:1.5;
+  color:#4b5563;
+  border-left:3px solid #d1d5db;
+  padding-left:9px;
+  margin-bottom:10px;
+}
+.card a{
+  display:inline-flex;
+  text-decoration:none;
+  color:#111827;
+  background:#e5e7eb;
+  padding:8px 10px;
+  border-radius:999px;
+  font-weight:850;
+  font-size:12px;
+}
+.leaflet-popup-content-wrapper{border-radius:18px}
+.popup-title{font-weight:850;font-size:15px}
+.popup-meta{color:#4b5563;line-height:1.5;margin-top:6px}
+.popup-link{display:inline-block;margin-top:8px;color:#0b57d0;font-weight:750}
+@media(max-width:880px){
+  .layout{grid-template-columns:1fr;padding:10px}
+  #map{height:58vh;min-height:440px;border-radius:20px}
+  .side{max-height:none;overflow:visible}
+  .hero{padding:18px 14px 12px}
+}
+</style>
+</head>
+<body>
+<section class="hero">
+  <div class="eyebrow">Osaka Rainy History Travel Map</div>
+  <h1>Indoor History Routes<br>for Rainy Days</h1>
+  <p class="lead">A stylish English map for rainy-day history experiences in Osaka. Switch between museums, archaeology sites, and deeper indoor cultural routes, then compare time, budget, and the best way to enjoy each place.</p>
+  <div class="toolbar" id="toolbar">
+    <button class="active" data-plan="all">All Plans</button>
+    <button data-plan="plan1">Osaka History Museum</button>
+    <button data-plan="plan2">Housing & Living</button>
+    <button data-plan="plan3">Chikatsu Asuka</button>
+    <button data-plan="plan4">Mint Museum</button>
+    <button data-plan="plan5">Sakai & Daisen</button>
+  </div>
+</section>
+<main class="layout">
+  <div id="map"></div>
+  <aside class="side">
+    <section class="recommend">
+      <h2 id="recTitle">All Rainy History Routes</h2>
+      <div class="meta">
+        <span class="pill" id="recTime">5 plans</span>
+        <span class="pill" id="recBudget">Indoor deep-dive</span>
+      </div>
+      <p id="recText">Use the full map to compare rainy-day history spots: central Osaka for broad history and immersive town life, Chikatsu Asuka for archaeology, the Mint Museum for industrial history, and Sakai for kofun culture and merchant heritage.</p>
+      <div class="route" id="routeBox"></div>
+    </section>
+    <section class="cards" id="cards"></section>
+  </aside>
+</main>
+<script>
+const plans = [{"id": "plan1", "title": "Rainy History Plan 1", "subtitle": "Osaka Museum of History", "total_time": "Approx. 2–3 hours", "total_budget": "Approx. ¥600–¥1,000", "mood": "Comprehensive, educational, city-history focused", "how": "This is the best all-around indoor history stop in Osaka. It gives you a broad understanding of the city from ancient Naniwa to the modern era, making it ideal as a first stop on a rainy day.", "spots": [{"name": "Osaka Museum of History", "lat": 34.682677, "lng": 135.520812, "vibe": "A comprehensive museum where you can explore Osaka’s history from ancient times to the modern era in one place.", "time": "Approx. 2–3 hours", "budget": "Approx. ¥600–¥1,000", "tip": "Start from the upper floors and move downward through time. The view toward Osaka Castle helps connect the exhibitions to the real city.", "google": "Osaka Museum of History"}]}, {"id": "plan2", "title": "Rainy History Plan 2", "subtitle": "Osaka Museum of Housing and Living", "total_time": "Approx. 2–3 hours", "total_budget": "Approx. ¥500–¥1,000", "mood": "Immersive, Edo-period, atmospheric, photogenic", "how": "This is a more immersive museum experience than a conventional gallery. It is best for visitors who want to feel the atmosphere of old Osaka rather than only read panels.", "spots": [{"name": "Osaka Museum of Housing and Living", "lat": 34.710403, "lng": 135.511609, "vibe": "An immersive museum that recreates the streets of Osaka in the Edo period, allowing visitors to experience historical town life.", "time": "Approx. 2–3 hours", "budget": "Approx. ¥500–¥1,000", "tip": "Move slowly through the recreated streets and focus on the daily-life details. It is especially good for visitors who enjoy visual storytelling.", "google": "Osaka Museum of Housing and Living"}]}, {"id": "plan3", "title": "Rainy History Plan 3", "subtitle": "Chikatsu Asuka Museum", "total_time": "Approx. 3–4 hours", "total_budget": "Approx. ¥400–¥1,000", "mood": "Archaeological, kofun-focused, serious, deep-dive", "how": "This is the strongest option for visitors who want a deeper, more specialized understanding of the Kofun period. It is less touristy and more academically oriented than central Osaka museums.", "spots": [{"name": "Osaka Prefectural Chikatsu Asuka Museum", "lat": 34.500851, "lng": 135.632682, "vibe": "A serious archaeology museum focused on the Kofun period, ideal for visitors who want a deep dive into ancient burial mounds and early Japanese history.", "time": "Approx. 3–4 hours", "budget": "Approx. ¥400–¥1,000", "tip": "Best for history lovers who want depth. Plan enough time, as this site is more destination-like than quick-stop friendly.", "google": "Osaka Prefectural Chikatsu Asuka Museum"}]}, {"id": "plan4", "title": "Rainy History Plan 4", "subtitle": "Japan Mint Museum", "total_time": "Approx. 1.5–2 hours", "total_budget": "Approx. ¥0–¥500", "mood": "Intellectual, industrial, modernizing Japan, niche", "how": "This is a compact but highly interesting stop for visitors curious about money, industry, state-building, and the modernization of Japan in the Meiji period.", "spots": [{"name": "Japan Mint Museum", "lat": 34.694374, "lng": 135.519571, "vibe": "An intellectual museum where you can learn about coins, industrial history, and Japan’s modernization through the story of minting.", "time": "Approx. 1.5–2 hours", "budget": "Approx. ¥0–¥500", "tip": "This is ideal if you like niche history topics. It works especially well as a shorter rainy-day cultural stop.", "google": "Japan Mint Museum Osaka"}]}, {"id": "plan5", "title": "Rainy History Plan 5", "subtitle": "Sakai Museum & Daisen Park History Zone", "total_time": "Approx. 3–4 hours", "total_budget": "Approx. ¥500–¥1,500", "mood": "Quiet, reflective, kofun, merchant-culture", "how": "This route works best for visitors who want a calmer historical zone outside central Osaka. Use the museum as the main indoor base, then explore the wider Daisen Park area if the weather allows.", "spots": [{"name": "Sakai City Museum", "lat": 34.558023, "lng": 135.487929, "vibe": "A museum where you can study ancient tomb culture and Sakai’s merchant history in a quiet and focused setting.", "time": "Approx. 1.5–2 hours", "budget": "Approx. ¥200–¥500", "tip": "Use this as the indoor anchor of the area. It gives essential context before looking at the kofun landscape outside.", "google": "Sakai City Museum"}, {"name": "Daisen Park Area", "lat": 34.558619, "lng": 135.482649, "vibe": "A calm historical zone where you can connect the museum content with the broader landscape of kofun culture and Sakai’s heritage.", "time": "Approx. 1.5–2 hours", "budget": "Approx. ¥300–¥1,000", "tip": "If the rain weakens, walk gently through the park area after the museum. Treat it as a landscape-reading experience rather than a busy sightseeing stop.", "google": "Daisen Park Sakai"}]}];
+const allSpots = [{"name": "Osaka Museum of History", "lat": 34.682677, "lng": 135.520812, "vibe": "A comprehensive museum where you can explore Osaka’s history from ancient times to the modern era in one place.", "time": "Approx. 2–3 hours", "budget": "Approx. ¥600–¥1,000", "tip": "Start from the upper floors and move downward through time. The view toward Osaka Castle helps connect the exhibitions to the real city.", "google": "Osaka Museum of History", "plans": ["plan1"]}, {"name": "Osaka Museum of Housing and Living", "lat": 34.710403, "lng": 135.511609, "vibe": "An immersive museum that recreates the streets of Osaka in the Edo period, allowing visitors to experience historical town life.", "time": "Approx. 2–3 hours", "budget": "Approx. ¥500–¥1,000", "tip": "Move slowly through the recreated streets and focus on the daily-life details. It is especially good for visitors who enjoy visual storytelling.", "google": "Osaka Museum of Housing and Living", "plans": ["plan2"]}, {"name": "Osaka Prefectural Chikatsu Asuka Museum", "lat": 34.500851, "lng": 135.632682, "vibe": "A serious archaeology museum focused on the Kofun period, ideal for visitors who want a deep dive into ancient burial mounds and early Japanese history.", "time": "Approx. 3–4 hours", "budget": "Approx. ¥400–¥1,000", "tip": "Best for history lovers who want depth. Plan enough time, as this site is more destination-like than quick-stop friendly.", "google": "Osaka Prefectural Chikatsu Asuka Museum", "plans": ["plan3"]}, {"name": "Japan Mint Museum", "lat": 34.694374, "lng": 135.519571, "vibe": "An intellectual museum where you can learn about coins, industrial history, and Japan’s modernization through the story of minting.", "time": "Approx. 1.5–2 hours", "budget": "Approx. ¥0–¥500", "tip": "This is ideal if you like niche history topics. It works especially well as a shorter rainy-day cultural stop.", "google": "Japan Mint Museum Osaka", "plans": ["plan4"]}, {"name": "Sakai City Museum", "lat": 34.558023, "lng": 135.487929, "vibe": "A museum where you can study ancient tomb culture and Sakai’s merchant history in a quiet and focused setting.", "time": "Approx. 1.5–2 hours", "budget": "Approx. ¥200–¥500", "tip": "Use this as the indoor anchor of the area. It gives essential context before looking at the kofun landscape outside.", "google": "Sakai City Museum", "plans": ["plan5"]}, {"name": "Daisen Park Area", "lat": 34.558619, "lng": 135.482649, "vibe": "A calm historical zone where you can connect the museum content with the broader landscape of kofun culture and Sakai’s heritage.", "time": "Approx. 1.5–2 hours", "budget": "Approx. ¥300–¥1,000", "tip": "If the rain weakens, walk gently through the park area after the museum. Treat it as a landscape-reading experience rather than a busy sightseeing stop.", "google": "Daisen Park Sakai", "plans": ["plan5"]}];
+let currentPlan = "all";
+let markers = [];
+const colors = {
+  plan1:"#60a5fa",
+  plan2:"#22d3ee",
+  plan3:"#a78bfa",
+  plan4:"#f59e0b",
+  plan5:"#34d399",
+  all:"#ffffff"
+};
+const map = L.map('map', {scrollWheelZoom:true});
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom:19,
+  attribution:'&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+function selectedPlanObj() {
+  return plans.find(p => p.id === currentPlan);
+}
+function visibleSpots() {
+  if (currentPlan === "all") return allSpots;
+  const p = selectedPlanObj();
+  return p ? p.spots.map(s => { return {...s, plans:[p.id]} }) : allSpots;
+}
+function colorFor(s) {
+  if (currentPlan !== "all") return colors[currentPlan];
+  return colors[s.plans?.[0]] || "#60a5fa";
+}
+function iconFor(s, index) {
+  const color = colorFor(s);
+  return L.divIcon({
+    className:'',
+    html:`<div style="
+      width:28px;height:28px;border-radius:50%;
+      background:${color};
+      color:#111827;
+      border:3px solid white;
+      display:flex;align-items:center;justify-content:center;
+      font-size:12px;font-weight:900;
+      box-shadow:0 4px 16px rgba(0,0,0,.45);
+    ">${index+1}</div>`,
+    iconSize:[28,28],
+    iconAnchor:[14,14]
+  });
+}
+function renderMap() {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+  const bounds = [];
+  visibleSpots().forEach((s, i) => {
+    bounds.push([s.lat, s.lng]);
+    const google = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.google)}`;
+    const marker = L.marker([s.lat, s.lng], {icon: iconFor(s, i)})
+      .addTo(map)
+      .bindPopup(`
+        <div class="popup-title">${s.name}</div>
+        <div class="popup-meta">
+          ${s.vibe}<br><br>
+          Time: ${s.time}<br>
+          Budget: ${s.budget}<br>
+          <span style="display:block;margin-top:6px;"><b>History tip:</b> ${s.tip}</span>
+        </div>
+        <a class="popup-link" href="${google}" target="_blank">Open in Google Maps</a>
+      `);
+    markers.push(marker);
+  });
+  if (bounds.length) map.fitBounds(bounds, {padding:[36,36]});
+}
+function renderCards() {
+  const cards = document.getElementById("cards");
+  cards.innerHTML = "";
+  visibleSpots().forEach((s, i) => {
+    const google = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.google)}`;
+    const card = document.createElement("article");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="topline">
+        <h3>${i+1}. ${s.name}</h3>
+        <span class="tag">History Spot</span>
+      </div>
+      <p class="desc">${s.vibe}</p>
+      <div class="mini">
+        <div><b>Time</b>${s.time}</div>
+        <div><b>Budget</b>${s.budget}</div>
+      </div>
+      <div class="tip"><b>How to enjoy:</b> ${s.tip}</div>
+      <a href="${google}" target="_blank">Open in Google Maps</a>
+    `;
+    cards.appendChild(card);
+  });
+}
+function renderRecommendation() {
+  const title = document.getElementById("recTitle");
+  const time = document.getElementById("recTime");
+  const budget = document.getElementById("recBudget");
+  const text = document.getElementById("recText");
+  const routeBox = document.getElementById("routeBox");
+  routeBox.innerHTML = "";
+
+  if (currentPlan === "all") {
+    title.textContent = "All Rainy History Routes";
+    time.textContent = "5 plans";
+    budget.textContent = "Indoor deep-dive";
+    text.textContent = "Use the full map to compare rainy-day history spots: central Osaka for broad history and immersive town life, Chikatsu Asuka for archaeology, the Mint Museum for industrial history, and Sakai for kofun culture and merchant heritage.";
+    plans.forEach(p => {
+      const div = document.createElement("div");
+      div.textContent = `${p.title}: ${p.subtitle} / ${p.total_time} / ${p.total_budget}`;
+      routeBox.appendChild(div);
+    });
+  } else {
+    const p = selectedPlanObj();
+    title.textContent = `${p.title}: ${p.subtitle}`;
+    time.textContent = p.total_time;
+    budget.textContent = p.total_budget;
+    text.textContent = `${p.mood}. ${p.how}`;
+    p.spots.forEach((s, i) => {
+      const div = document.createElement("div");
+      div.textContent = `${i+1}. ${s.name} → ${s.time} / ${s.budget}`;
+      routeBox.appendChild(div);
+    });
+  }
+}
+function renderAll() {
+  renderMap();
+  renderCards();
+  renderRecommendation();
+}
+document.querySelectorAll("button[data-plan]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("button[data-plan]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentPlan = btn.dataset.plan;
+    renderAll();
+  });
+});
+renderAll();
+</script>
+</body>
+</html>
